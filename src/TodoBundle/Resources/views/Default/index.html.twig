@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+{% block body %}
+    <table id="content_table">
+        {% for job in list %}
+            <tr><td>{{ job.description }}</td><td><button onclick="removeJob({{ job.id }});">Delete</button></td></tr>
+        {% endfor %}
+    </table>
+    <form action="{{ path('add_job') }}" method="post" {{ form_enctype(form) }} id="job_form">
+        {{ form_widget(form.description) }}
+        {{ form_widget(form.save) }}
+    </form>
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        var $form = $('#job_form');
+        var content = $('#content_table');
+        $form.submit(function(){
+            $data = $(this).serializeArray();
+            $.post(
+                    '{{ path("add_job") }}',
+                    $data,
+                    function(data){
+                        $('textarea').val('');
+                        $('#content_table').append('<tr><td>'+data.form.description+'</td><td><button onclick="removeJob('+data.form.id+')">Delete</button></td></tr>');
+                    },
+            "json");
+            return false;
+        });
+        function removeJob($id){
+            $.post(
+                    '{{ path("del_job") }}',
+                    {'id' : $id},
+                    function(data){
+                        refreshTable();
+                    },
+            "json");
+        }
+        function refreshTable(){
+            $.post(
+                    '{{ path("get_all") }}',
+                    {},
+                    function(data){
+                        content.html('');
+                        for(var i=0; i<data.length; i++){
+                            content.append('<tr><td>'+data[i].description+'</td><td><button onclick="removeJob('+data[i].id+')">Delete</button></td></tr>');
+                        }
+                    },
+            "json");
+        }
+    </script>
+{% endblock %}
